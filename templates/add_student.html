@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add Student - Onboarding</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url("{{ url_for('static', filename='images/bg.png') }}") center/cover no-repeat fixed;
+            background-attachment: fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                background-attachment: scroll;
+                padding: 10px;
+            }
+        }
+
+        .onboarding-container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .progress-bar-container {
+            height: 6px;
+            background: #e9ecef;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.4s ease;
+            width: 33.33%;
+        }
+
+        .onboarding-content {
+            padding: 50px 60px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e9ecef;
+            z-index: 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #6c757d;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .step.completed .step-circle {
+            background: #28a745;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 13px;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .step-description {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #f7fafc;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e6f2ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #a0aec0;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:hover .upload-icon {
+            color: #667eea;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-preview {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #cbd5e0;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .success-animation {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #28a745;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: scaleIn 0.5s ease;
+        }
+
+        .success-icon i {
+            font-size: 50px;
+            color: white;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            padding: 16px 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification.success {
+            background-color: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .notification.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .notification.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .notification i {
+            font-size: 20px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .notification.removing {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        .file-count {
+            margin-top: 15px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .onboarding-content {
+                padding: 30px 25px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .step-label {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="onboarding-container">
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+
+        <div class="onboarding-content">
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="stepIndicator1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Student Info</div>
+                </div>
+                <div class="step" id="stepIndicator2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Upload Photos</div>
+                </div>
+                <div class="step" id="stepIndicator3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Complete</div>
+                </div>
+            </div>
+
+            <!-- Step 1: Student Information -->
+            <div class="step-content active" id="step1">
+                <h2 class="step-title">Student Information</h2>
+                <p class="step-description">Enter the basic details of the student</p>
+
+                <div class="form-group">
+                    <label class="form-label">Full Name <span style="color: #e53e3e;">*</span></label>
+                    <input type="text" class="form-control" id="nameInput" placeholder="Enter full name with surname" required />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Roll Number <span style="color: #e53e3e;">*</span></label>
+                        <input type="text" class="form-control" id="rollInput" placeholder="e.g., 2024001" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Registration Number <span style="color: #e53e3e;">*</span></label>
+                        <input type="text" class="form-control" id="regInput" placeholder="e.g., REG2024001" required />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Class <span style="color: #e53e3e;">*</span></label>
+                        <input type="text" class="form-control" id="classInput" placeholder="e.g., 10th Grade" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Section <span style="color: #e53e3e;">*</span></label>
+                        <input type="text" class="form-control" id="secInput" placeholder="e.g., A" required />
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">
+                        <i class="fas fa-arrow-left"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextStep1">
+                        Next <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Upload Photos -->
+            <div class="step-content" id="step2">
+                <h2 class="step-title">Upload Your Photos</h2>
+                <p class="step-description">Upload 3-5 clear photos for better recognition</p>
+
+                <!-- Camera Capture Section -->
+                <div style="margin-bottom: 20px;">
+                    <button type="button" class="btn btn-primary" id="openCameraBtn" style="width: 100%; margin-bottom: 15px;">
+                        <i class="fas fa-camera"></i> Take Photos with Camera
+                    </button>
+                    <div id="cameraSection" style="display: none;">
+                        <video id="cameraVideo" autoplay playsinline style="width: 100%; max-height: 400px; border-radius: 12px; transform: scaleX(-1); background: #000;"></video>
+                        <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
+                            <button type="button" class="btn btn-success" id="captureBtn">
+                                <i class="fas fa-camera"></i> Capture
+                            </button>
+                            <button type="button" class="btn btn-danger" id="closeCameraBtn">
+                                <i class="fas fa-times"></i> Close Camera
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <h4 style="color: #4a5568; margin-bottom: 8px;">Drag & Drop or Click to Upload</h4>
+                    <p style="color: #718096; font-size: 14px;">Support: JPG, PNG (Multiple files)</p>
+                    <input type="file" id="uploadInput" accept="image/jpeg,image/jpg,image/png" multiple style="display: none;" />
+                </div>
+
+                <div class="file-count" id="fileCount" style="display: none;"></div>
+
+                <div class="preview-container" id="previewContainer"></div>
+
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" id="prevStep2">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextStep2" disabled>
+                        Upload & Register <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: Success -->
+            <div class="step-content" id="step3">
+                <div class="success-animation">
+                    <div class="success-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2 class="step-title">Registration Complete!</h2>
+                    <p class="step-description" id="successMessage">Student has been successfully registered</p>
+                </div>
+
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='/add_student'">
+                        <i class="fas fa-plus"></i> Add Another Student
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="window.location.href='/'">
+                        <i class="fas fa-home"></i> Go to Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let studentId = null;
+        let tempData = null;
+        let selectedFiles = [];
+        let cameraStream = null;
+
+        document.getElementById('openCameraBtn').addEventListener('click', async () => {
+            const cameraSection = document.getElementById('cameraSection');
+            const video = document.getElementById('cameraVideo');
+            
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                video.srcObject = cameraStream;
+                cameraSection.style.display = 'block';
+                document.getElementById('openCameraBtn').style.display = 'none';
+            } catch (err) {
+                showNotification('Camera access denied: ' + err.message, 'error');
+            }
+        });
+
+        document.getElementById('closeCameraBtn').addEventListener('click', () => {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            document.getElementById('cameraSection').style.display = 'none';
+            document.getElementById('openCameraBtn').style.display = 'block';
+        });
+
+        document.getElementById('captureBtn').addEventListener('click', async () => {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.createElement('canvas');
+            
+            let width = video.videoWidth;
+            let height = video.videoHeight;
+            
+            const maxDimension = 1280;
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = (height / width) * maxDimension;
+                    width = maxDimension;
+                } else {
+                    width = (width / height) * maxDimension;
+                    height = maxDimension;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, width, height);
+            
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.75));
+            const file = new File([blob], `camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
+            
+            selectedFiles.push(file);
+            updatePreview();
+            document.getElementById('nextStep2').disabled = false;
+            showNotification('Photo captured!', 'success');
+        });
+
+        // Compress image file before upload
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        const maxDimension = 1280;
+                        if (width > maxDimension || height > maxDimension) {
+                            if (width > height) {
+                                height = (height / width) * maxDimension;
+                                width = maxDimension;
+                            } else {
+                                width = (width / height) * maxDimension;
+                                height = maxDimension;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob((blob) => {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            resolve(compressedFile);
+                        }, 'image/jpeg', 0.70);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Notification System
+        function showNotification(message, type = "info") {
+            const div = document.createElement("div");
+            div.className = `notification ${type}`;
+            
+            const iconMap = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            div.innerHTML = `
+                <i class="fas ${iconMap[type]}"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(div);
+            
+            setTimeout(() => {
+                div.classList.add("removing");
+                setTimeout(() => div.remove(), 300);
+            }, 4000);
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / 3) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        function goToStep(step) {
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.step').forEach(el => {
+                el.classList.remove('active', 'completed');
+            });
+
+            document.getElementById('step' + step).classList.add('active');
+            document.getElementById('stepIndicator' + step).classList.add('active');
+
+            for (let i = 1; i < step; i++) {
+                document.getElementById('stepIndicator' + i).classList.add('completed');
+            }
+
+            currentStep = step;
+            updateProgress();
+        }
+
+        document.getElementById('nextStep1').addEventListener('click', async () => {
+            const name = document.getElementById('nameInput').value.trim();
+            const roll = document.getElementById('rollInput').value.trim();
+            const cls = document.getElementById('classInput').value.trim();
+            const sec = document.getElementById('secInput').value.trim();
+            const reg_no = document.getElementById('regInput').value.trim();
+
+            if (!name) {
+                showNotification("Full Name is required", "error");
+                document.getElementById('nameInput').focus();
+                return;
+            }
+            
+            if (!roll) {
+                showNotification("Roll Number is required", "error");
+                document.getElementById('rollInput').focus();
+                return;
+            }
+            
+            if (!cls) {
+                showNotification("Class is required", "error");
+                document.getElementById('classInput').focus();
+                return;
+            }
+            
+            if (!sec) {
+                showNotification("Section is required", "error");
+                document.getElementById('secInput').focus();
+                return;
+            }
+            
+            if (!reg_no) {
+                showNotification("Registration Number is required", "error");
+                document.getElementById('regInput').focus();
+                return;
+            }
+            
+            const nameParts = name.split(' ').filter(part => part.length > 0);
+            if (nameParts.length < 2) {
+                showNotification("Please enter full name including surname (e.g., Adrika Dhar)", "error");
+                document.getElementById('nameInput').focus();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('roll', roll);
+            formData.append('class', cls);
+            formData.append('sec', sec);
+            formData.append('reg_no', reg_no);
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+                
+                const response = await fetch('/add_student', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        showNotification(data.error || 'Validation failed', 'error');
+                    } else {
+                        showNotification('Server error: ' + response.statusText, 'error');
+                    }
+                    return;
+                }
+
+                const data = await response.json();
+                studentrollnumber = data.student_roll_number;
+                tempData = data.temp_data;
+                showNotification('Student info validated successfully', 'success');
+                goToStep(2);
+            } catch (error) {
+                showNotification('Error: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('prevStep2').addEventListener('click', () => {
+            goToStep(1);
+        });
+
+        document.getElementById('uploadArea').addEventListener('click', () => {
+            document.getElementById('uploadInput').click();
+        });
+
+        const uploadArea = document.getElementById('uploadArea');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleFiles(files);
+        });
+
+        document.getElementById('uploadInput').addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            await handleFiles(files);
+        });
+
+        async function handleFiles(files) {
+            const imageFiles = files.filter(file => file.type.startsWith('image/'));
+            
+            if (imageFiles.length === 0) {
+                showNotification('Please select image files only', 'warning');
+                return;
+            }
+
+            showNotification(`Compressing ${imageFiles.length} image(s)...`, 'info');
+            
+            let processedCount = 0;
+            for (let i = 0; i < imageFiles.length; i++) {
+                try {
+                    const compressedFile = await compressImage(imageFiles[i]);
+                    const sizeMB = (compressedFile.size / (1024 * 1024)).toFixed(2);
+                    console.log(`Compressed ${imageFiles[i].name} to ${sizeMB}MB`);
+                    selectedFiles.push(compressedFile);
+                    processedCount++;
+                    showNotification(`Processing ${processedCount}/${imageFiles.length}...`, 'info');
+                } catch (err) {
+                    console.error('Compression error:', err);
+                    showNotification(`Failed to process ${imageFiles[i].name}`, 'error');
+                }
+            }
+            
+            updatePreview();
+            
+            document.getElementById('nextStep2').disabled = selectedFiles.length === 0;
+            
+            const totalSize = selectedFiles.reduce((sum, f) => sum + f.size, 0);
+            const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+            showNotification(`${selectedFiles.length} image(s) ready (${totalSizeMB}MB total)`, 'success');
+        }
+
+        function updatePreview() {
+            const container = document.getElementById('previewContainer');
+            const fileCount = document.getElementById('fileCount');
+            
+            container.innerHTML = '';
+            
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview ${index + 1}" />
+                        <button class="remove-preview" onclick="removeFile(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    container.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            if (selectedFiles.length > 0) {
+                fileCount.style.display = 'block';
+                fileCount.textContent = `${selectedFiles.length} image(s) selected`;
+            } else {
+                fileCount.style.display = 'none';
+            }
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updatePreview();
+            document.getElementById('nextStep2').disabled = selectedFiles.length === 0;
+        }
+
+        document.getElementById('nextStep2').addEventListener('click', async () => {
+            if (selectedFiles.length === 0) {
+                showNotification('Please select at least one image', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('nextStep2');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+
+            const formData = new FormData();
+            formData.append('student_roll_number', studentrollnumber);
+            if (tempData) {
+                formData.append('temp_data', JSON.stringify(tempData));
+            }
+
+            selectedFiles.forEach(file => {
+                formData.append('images[]', file);
+            });
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000);
+                
+                const response = await fetch('/upload_face', {
+                    method: 'POST',
+                    body: formData,
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const data = await response.json();
+                        showNotification(data.error || 'Upload failed', 'error');
+                    } else {
+                        showNotification('Server error: ' + response.statusText, 'error');
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = 'Upload & Register <i class="fas fa-check"></i>';
+                    return;
+                }
+
+                const data = await response.json();
+                showNotification(data.message || 'Registration successful', 'success');
+                document.getElementById('successMessage').textContent = 
+                    `${tempData.name} has been successfully registered with ${data.saved} photos`;
+                goToStep(3);
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    showNotification('Upload timeout. Please try with fewer/smaller images.', 'error');
+                } else if (error.message.includes('Failed to fetch')) {
+                    showNotification('Network error. Please check your connection and try again.', 'error');
+                } else {
+                    showNotification('Error: ' + error.message, 'error');
+                }
+                btn.disabled = false;
+                btn.innerHTML = 'Upload & Register <i class="fas fa-check"></i>';
+            }
+        });
+
+        updateProgress();
+    </script>
+</body>
+</html>
