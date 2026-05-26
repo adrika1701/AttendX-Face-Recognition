@@ -36,7 +36,7 @@ Libraries/Frameworks: OpenCV 📷, Mediapipe, RandomForestClassifier 🧩, Face 
 
 Database: SQLite3 💾
 
-GUI: HTML| CSS | javascript | Web-based dashboard 🖥️
+GUI: HTML| CSS | javascript | Web-based dashboard 
 
 Optional: Email/SMS APIs ✉️📱
 
