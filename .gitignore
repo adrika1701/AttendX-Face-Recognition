@@ -21,3 +21,4 @@ dataset/
 *.swo
 .DS_Store
 Thumbs.db
+CODEBASE_ANALYSIS.md
